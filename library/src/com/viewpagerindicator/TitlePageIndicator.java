@@ -323,7 +323,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
         ArrayList<RectF> bounds = calculateAllBounds(mPaintText);
 
         //Make sure we're on a page that still exists
-        if (mCurrentPage >= bounds.size()) {
+        if (mCurrentPage > bounds.size()) { // vdesmet93: removed the equal-sign, should prevent FC. Should fix issue #50
             setCurrentItem(bounds.size()-1);
         }
 
