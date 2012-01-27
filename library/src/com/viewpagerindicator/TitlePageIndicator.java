@@ -18,14 +18,18 @@
 package com.viewpagerindicator;
 
 import java.util.ArrayList;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.view.MotionEventCompat;
@@ -33,6 +37,7 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -88,6 +93,22 @@ public class TitlePageIndicator extends View implements PageIndicator {
             return null;
         }
     }
+    public enum AdjacentIndicatorStyle {
+    	None(0), Fade(1), Arrows(2), Custom(4); 
+    	public final int value;
+    	
+    	private AdjacentIndicatorStyle(int value) {
+    		this.value = value;
+    	}
+    	
+    	public static AdjacentIndicatorStyle fromValue(int value) {
+    		for(AdjacentIndicatorStyle style : AdjacentIndicatorStyle.values()) {
+    			if(style.value == value) return style;
+    		}
+    		return null;
+    	}
+    }
+    
 
     private ViewPager mViewPager;
     private ViewPager.OnPageChangeListener mListener;
@@ -102,6 +123,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
     private Path mPath;
     private final Paint mPaintFooterLine = new Paint();
     private IndicatorStyle mFooterIndicatorStyle;
+    private AdjacentIndicatorStyle mAdjacentIndicatorStyle;
+    private int mAdjacentIndicatorLeft;
+    private int mAdjacentIndicatorRight;
     private final Paint mPaintFooterIndicator = new Paint();
     private float mFooterIndicatorHeight;
     private float mFooterIndicatorUnderlinePadding;
@@ -111,6 +135,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
     /** Left and right side padding for not active view titles. */
     private float mClipPadding;
     private float mFooterLineHeight;
+    
 
     private static final int INVALID_POINTER = -1;
 
@@ -164,7 +189,12 @@ public class TitlePageIndicator extends View implements PageIndicator {
         mColorSelected = a.getColor(R.styleable.TitlePageIndicator_selectedColor, defaultSelectedColor);
         mColorText = a.getColor(R.styleable.TitlePageIndicator_textColor, defaultTextColor);
         mBoldText = a.getBoolean(R.styleable.TitlePageIndicator_selectedBold, defaultSelectedBold);
-
+        
+        // TODO add adjacentIndicatorLeft & adjacentIndicatorRight
+        mAdjacentIndicatorStyle = AdjacentIndicatorStyle.fromValue(a.getInteger(R.styleable.TitlePageIndicator_adjacentIndicatorStyle, 1));
+        mAdjacentIndicatorLeft = a.getResourceId(R.styleable.TitlePageIndicator_adjacentIndicatorLeft, R.drawable.vpi_adjacent_arrow_left);
+        mAdjacentIndicatorRight = a.getResourceId(R.styleable.TitlePageIndicator_adjacentIndicatorRight, R.drawable.vpi_adjacent_arrow_right);
+        
         final float textSize = a.getDimension(R.styleable.TitlePageIndicator_textSize, defaultTextSize);
         final int footerColor = a.getColor(R.styleable.TitlePageIndicator_footerColor, defaultFooterColor);
         mPaintText.setTextSize(textSize);
@@ -174,7 +204,6 @@ public class TitlePageIndicator extends View implements PageIndicator {
         mPaintFooterLine.setColor(footerColor);
         mPaintFooterIndicator.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaintFooterIndicator.setColor(footerColor);
-
         a.recycle();
 
         final ViewConfiguration configuration = ViewConfiguration.get(context);
@@ -182,7 +211,8 @@ public class TitlePageIndicator extends View implements PageIndicator {
     }
 
 
-    public int getFooterColor() {
+
+	public int getFooterColor() {
         return mPaintFooterLine.getColor();
     }
 
@@ -354,11 +384,15 @@ public class TitlePageIndicator extends View implements PageIndicator {
         if (curPageBound.left < leftClip) {
             //Try to clip to the screen (left side)
             clipViewOnTheLeft(curPageBound, curPageWidth, left);
+
         }
         if (curPageBound.right > rightClip) {
             //Try to clip to the screen (right side)
             clipViewOnTheRight(curPageBound, curPageWidth, right);
         }
+        
+        final int ARROW_HEIGHT = (getHeight()/3);
+    	final int ARROW_WIDTH = ARROW_HEIGHT / 2;
 
         //Left views starting from the current position
         if (mCurrentPage > 0) {
@@ -367,8 +401,16 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 //Is left side is outside the screen
                 if (bound.left < leftClip) {
                     float w = bound.right - bound.left;
+                    
+                    // if AdjacentIndicatorStyle is arrows, increase width so the arrow fits.
+                    if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom)
+                    {
+                    	w += ARROW_WIDTH * 3;
+                    }
+                    
                     //Try to clip to the screen (left side)
                     clipViewOnTheLeft(bound, w, left);
+                    
                     //Except if there's an intersection with the right view
                     RectF rightBound = bounds.get(i + 1);
                     //Intersection
@@ -386,6 +428,13 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 //If right side is outside the screen
                 if (bound.right > rightClip) {
                     float w = bound.right - bound.left;
+                    
+                    // if AdjacentIndicatorStyle is arrows, increase width so the arrow fits.
+                    if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom)
+                    {
+                    	w += ARROW_WIDTH * 3;
+                    }
+                    
                     //Try to clip to the screen (right side)
                     clipViewOnTheRight(bound, w, right);
                     //Except if there's an intersection with the left view
@@ -398,7 +447,8 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 }
             }
         }
-
+        
+    	
         //Now draw views
         for (int i = 0; i < count; i++) {
             //Get the title
@@ -406,13 +456,34 @@ public class TitlePageIndicator extends View implements PageIndicator {
             //Only if one side is visible
             if ((bound.left > left && bound.left < right) || (bound.right > left && bound.right < right)) {
                 final boolean currentPage = (i == page);
+                final boolean previousPage = (i == page -1);
+                final boolean nextPage = (i == page + 1);
+                
+       //         final int ARROW_HEIGHT = (height/3);
+      //      	final int ARROW_WIDTH = ARROW_HEIGHT / 2;
+            	
+            	
                 //Only set bold if we are within bounds
                 mPaintText.setFakeBoldText(currentPage && currentBold && mBoldText);
 
                 //Draw text as unselected
                 mPaintText.setColor(mColorText);
-                canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
-
+                
+                if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& previousPage) {
+                	canvas.drawText(mTitleProvider.getTitle(i), bound.left + ARROW_WIDTH * 3, bound.bottom + mTopPadding, mPaintText);
+                	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorLeft);
+            		Bitmap arrowLeft = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), ARROW_WIDTH, ARROW_HEIGHT, true);
+            		canvas.drawBitmap(arrowLeft, bound.left +  ARROW_WIDTH , bound.bottom - (ARROW_HEIGHT/2), null);
+                }
+                else if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& nextPage) {
+                	canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
+                	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorRight);
+            		Bitmap arrowRight = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), ARROW_WIDTH, ARROW_HEIGHT, true);
+            		canvas.drawBitmap(arrowRight, bound.right - (ARROW_WIDTH*2) , bound.bottom - (ARROW_HEIGHT/2), null);
+                }
+                else canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
+                
+                
                 //If we are within the selected bounds draw the selected text
                 if (currentPage && currentSelected) {
                     mPaintText.setColor(mColorSelected);
@@ -457,6 +528,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 mPaintFooterIndicator.setAlpha(0xFF);
                 break;
         }
+        
+      
+        
     }
 
     public boolean onTouchEvent(android.view.MotionEvent ev) {
@@ -591,7 +665,13 @@ public class TitlePageIndicator extends View implements PageIndicator {
         final int count = mViewPager.getAdapter().getCount();
         final int width = getWidth();
         final int halfWidth = width / 2;
+        
+        
+    	
         for (int i = 0; i < count; i++) {
+        	
+        	
+            
             RectF bounds = calcBounds(i, paint);
             float w = (bounds.right - bounds.left);
             float h = (bounds.bottom - bounds.top);
@@ -599,6 +679,8 @@ public class TitlePageIndicator extends View implements PageIndicator {
             bounds.right = bounds.left + w;
             bounds.top = 0;
             bounds.bottom = h;
+            
+            
             list.add(bounds);
         }
 

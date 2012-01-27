@@ -70,7 +70,7 @@
         <attr name="footerPadding" format="dimension" />
         <!-- Color of the selected title. -->
         <attr name="selectedColor" format="color" />
-        <!-- Whether or not the selected item is displayed as bold. -->
+        <!-- Whether or not t	he selected item is displayed as bold. -->
         <attr name="selectedBold" format="boolean" />
         <!-- Color of regular titles. -->
         <attr name="textColor" format="color" />
@@ -80,5 +80,17 @@
         <attr name="titlePadding" format="dimension" />
         <!-- Padding between titles and the top of the View. -->
         <attr name="topPadding" format="dimension" />
+        
+        <attr name="adjacentIndicatorStyle" format="enum">
+            <enum name="none" value="0" />
+            <enum name="fade" value="1" />
+            <enum name="arrows" value="2" />
+            <enum name="custom" value="4" />
+        </attr>
+        
+        <attr name="adjacentIndicatorLeft" format="integer" />
+        
+        <attr name="adjacentIndicatorRight" format="integer" />
+        
     </declare-styleable>
 </resources>
