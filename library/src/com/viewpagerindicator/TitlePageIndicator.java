@@ -20,6 +20,7 @@ package com.viewpagerindicator;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -160,6 +161,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
     public TitlePageIndicator(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
+        // allow usage of onSaveInstanceState and onRestoreInstanceState
+        this.setSaveEnabled(true);
+        
         //Load defaults from resources
         final Resources res = getResources();
         final int defaultFooterColor = res.getColor(R.color.default_title_indicator_footer_color);
@@ -854,12 +858,19 @@ public class TitlePageIndicator extends View implements PageIndicator {
     }
 
     @Override
+	public void onConfigurationChanged(Configuration newConfig){        
+	    super.onConfigurationChanged(newConfig);
+	    mCurrentPage = mViewPager.getCurrentItem();
+	    this.invalidate();
+    }
+    @Override
     public void onRestoreInstanceState(Parcelable state) {
         SavedState savedState = (SavedState)state;
         super.onRestoreInstanceState(savedState.getSuperState());
         mCurrentPage = savedState.currentPage;
         requestLayout();
     }
+    
 
     @Override
     public Parcelable onSaveInstanceState() {
