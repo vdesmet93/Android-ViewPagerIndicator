@@ -319,7 +319,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
             return;
         }
 
-        // mCurrentPage is -1 on first start and after orientation changed. If so, retrieve the correct index from viewpager.
+        // mCurrentPage is -1 on first start and after orientation changed. If so, retrieve the correct index from viewpager
         if(mCurrentPage == -1 && mViewPager != null) mCurrentPage = mViewPager.getCurrentItem();
         
         //Calculate views bounds
