@@ -896,12 +896,6 @@ public class TitlePageIndicator extends View implements PageIndicator {
     }
 
     @Override
-	public void onConfigurationChanged(Configuration newConfig){        
-	    super.onConfigurationChanged(newConfig);
-	    mCurrentPage = mViewPager.getCurrentItem();
-	    this.invalidate();
-    }
-    @Override
     public void onRestoreInstanceState(Parcelable state) {
         SavedState savedState = (SavedState)state;
         super.onRestoreInstanceState(savedState.getSuperState());
