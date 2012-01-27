@@ -160,9 +160,6 @@ public class TitlePageIndicator extends View implements PageIndicator {
 
     public TitlePageIndicator(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
-        // allow usage of onSaveInstanceState and onRestoreInstanceState
-        this.setSaveEnabled(true);
         
         //Load defaults from resources
         final Resources res = getResources();
