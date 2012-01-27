@@ -38,7 +38,7 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -127,8 +127,11 @@ public class TitlePageIndicator extends View implements PageIndicator {
     private AdjacentIndicatorStyle mAdjacentIndicatorStyle;
     private int mAdjacentIndicatorLeft;
     private int mAdjacentIndicatorRight;
-    private int mAdjacentIndicatorWidth;
-    private int mAdjacentIndicatorHeight;
+    private float mAdjacentIndicatorWidth;
+    private float mAdjacentIndicatorHeight;
+    private boolean mCustomAdjacentIndicatorHeight = false;
+    private boolean mCustomAdjacentIndicatorWidth = false;
+    
     private final Paint mPaintFooterIndicator = new Paint();
     private float mFooterIndicatorHeight;
     private float mFooterIndicatorUnderlinePadding;
@@ -372,8 +375,41 @@ public class TitlePageIndicator extends View implements PageIndicator {
     	if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom)
     	this.mAdjacentIndicatorRight = resId;
     }
+    
     public int getAdjacentIndicatorRight() {
     	return mAdjacentIndicatorRight;
+    }
+    
+    /**
+     * Set custom width for the Adjacent Indicators
+     * Set to 0 or below to reset
+     * @param width
+     */
+    public void setAdjacentIndicatorWidth(float width) {
+    	if(width > 0) {
+    		this.mAdjacentIndicatorWidth = width;
+    		this.mCustomAdjacentIndicatorWidth = true;
+    	}
+    	
+    }
+    public float getAdjacentIndicatorWidth() {
+    	return mAdjacentIndicatorWidth;
+    }
+    
+    /**
+     * Set custom height for the Adjacent Indicators
+     * Set to 0 or below to reset
+     * @param height
+     */
+    public void setAdjacentIndicatorHeight(float height) {
+    	if(height > 0) {
+	    	this.mAdjacentIndicatorHeight = height;
+	    	this.mCustomAdjacentIndicatorHeight = true;
+    	}
+    }
+    
+    public float getAdjacentIndicatorHeight() {
+    	return mAdjacentIndicatorHeight;
     }
     /*
      * (non-Javadoc)
@@ -434,8 +470,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
             clipViewOnTheRight(curPageBound, curPageWidth, right);
         }
         
-          mAdjacentIndicatorWidth = (getHeight()/3);
-    	  mAdjacentIndicatorHeight = mAdjacentIndicatorWidth / 2;
+        if(mAdjacentIndicatorHeight <= 0 || !mCustomAdjacentIndicatorHeight) mAdjacentIndicatorHeight = (getHeight()/3);  
+        if(mAdjacentIndicatorWidth <= 0 || !mCustomAdjacentIndicatorWidth) mAdjacentIndicatorWidth = mAdjacentIndicatorHeight / 2;
+          
 
         //Left views starting from the current position
         if (mCurrentPage > 0) {
@@ -447,7 +484,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 // if AdjacentIndicatorStyle is arrows, increase width so the arrow fits.
                 if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom)
                 {
-                	w += mAdjacentIndicatorHeight * 3;
+                	w += (mTitlePadding * 2) + mAdjacentIndicatorWidth;
                 }
                 
                 //Is left side is outside the screen
@@ -475,7 +512,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
              // if AdjacentIndicatorStyle is arrows, increase width so the arrow fits.
                 if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom)
                 {
-                	w += mAdjacentIndicatorHeight * 3;
+                	w += (mTitlePadding * 2) + mAdjacentIndicatorWidth;
                 }
                 
                 //If right side is outside the screen
@@ -513,16 +550,20 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 mPaintText.setColor(mColorText);
                 
                 if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& previousPage) {
-                	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorHeight * 3, bound.bottom + mTopPadding, mPaintText);
+                	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
+                	
                 	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorLeft);
-            		Bitmap arrowLeft = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), mAdjacentIndicatorHeight, mAdjacentIndicatorWidth, true);
-            		canvas.drawBitmap(arrowLeft, bound.left +  mAdjacentIndicatorHeight , bound.bottom  - mAdjacentIndicatorHeight , null);
+                	Bitmap arrowLeft = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
+                	float drawableStart = (height - mAdjacentIndicatorHeight) / 2; 
+            		canvas.drawBitmap(arrowLeft, bound.left +  mTitlePadding ,  drawableStart, null);
                 }
                 else if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& nextPage) {
                 	canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
+                	
                 	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorRight);
-            		Bitmap arrowRight = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), mAdjacentIndicatorHeight, mAdjacentIndicatorWidth, true);
-            		canvas.drawBitmap(arrowRight, bound.right - (mAdjacentIndicatorHeight*2) , bound.bottom  - mAdjacentIndicatorHeight , null);
+            		Bitmap arrowRight = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
+            		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
+            		canvas.drawBitmap(arrowRight, bound.right - (mAdjacentIndicatorWidth) - mTitlePadding, drawableStart  , null);
                 }
                 else canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
                 
