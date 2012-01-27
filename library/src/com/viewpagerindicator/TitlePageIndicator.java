@@ -114,7 +114,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
     private ViewPager mViewPager;
     private ViewPager.OnPageChangeListener mListener;
     private TitleProvider mTitleProvider;
-    private int mCurrentPage;
+    private int mCurrentPage = -1;
     private int mCurrentOffset;
     private int mScrollState;
     private final Paint mPaintText = new Paint();
@@ -206,6 +206,11 @@ public class TitlePageIndicator extends View implements PageIndicator {
         	mAdjacentIndicatorLeft = R.drawable.vpi_adjacent_arrow_left;
         	mAdjacentIndicatorRight = R.drawable.vpi_adjacent_arrow_right;
         }
+        mAdjacentIndicatorWidth = a.getDimensionPixelSize(R.styleable.TitlePageIndicator_adjacentIndicatorWidth, 0);
+        mAdjacentIndicatorHeight = a.getDimensionPixelSize(R.styleable.TitlePageIndicator_adjacentIndicatorHeight, 0);
+        if(mAdjacentIndicatorWidth != 0) mCustomAdjacentIndicatorWidth = true;
+        if(mAdjacentIndicatorHeight != 0) mCustomAdjacentIndicatorHeight = true;
+        
         
         final float textSize = a.getDimension(R.styleable.TitlePageIndicator_textSize, defaultTextSize);
         final int footerColor = a.getColor(R.styleable.TitlePageIndicator_footerColor, defaultFooterColor);
@@ -428,12 +433,17 @@ public class TitlePageIndicator extends View implements PageIndicator {
             return;
         }
 
+        // mCurrentPage is -1 on first start and after orientation changed. If so, retrieve the correct index from viewpager
+        if(mCurrentPage == -1 && mViewPager != null) mCurrentPage = mViewPager.getCurrentItem();
+        
         //Calculate views bounds
         ArrayList<RectF> bounds = calculateAllBounds(mPaintText);
+        final int boundsSize = bounds.size();
 
         //Make sure we're on a page that still exists
-        if (mCurrentPage > bounds.size()) {
-            setCurrentItem(bounds.size()-1);
+        if (mCurrentPage >= boundsSize) {
+            setCurrentItem(boundsSize - 1);
+            return;
         }
 
         final int countMinusOne = count - 1;
@@ -534,6 +544,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
         
     	
         //Now draw views
+        int colorTextAlpha = mColorText >>> 24;
         for (int i = 0; i < count; i++) {
             //Get the title
             RectF bound = bounds.get(i);
@@ -548,6 +559,10 @@ public class TitlePageIndicator extends View implements PageIndicator {
 
                 //Draw text as unselected
                 mPaintText.setColor(mColorText);
+                if(currentPage && currentSelected) {
+                    //Fade out/in unselected text as the selected text fades in/out
+                    mPaintText.setAlpha(colorTextAlpha - (int)(colorTextAlpha * selectedPercent));
+                }
                 
                 if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& previousPage) {
                 	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
@@ -566,7 +581,6 @@ public class TitlePageIndicator extends View implements PageIndicator {
             		canvas.drawBitmap(arrowRight, bound.right - (mAdjacentIndicatorWidth) - mTitlePadding, drawableStart  , null);
                 }
                 else canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
-                
                 
                 //If we are within the selected bounds draw the selected text
                 if (currentPage && currentSelected) {
@@ -595,7 +609,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 break;
 
             case Underline:
-                if (!currentSelected) {
+                if (!currentSelected || page >= boundsSize) {
                     break;
                 }
 
@@ -618,6 +632,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
     }
 
     public boolean onTouchEvent(android.view.MotionEvent ev) {
+        if (super.onTouchEvent(ev)) {
+            return true;
+        }
         if ((mViewPager == null) || (mViewPager.getAdapter().getCount() == 0)) {
             return false;
         }
