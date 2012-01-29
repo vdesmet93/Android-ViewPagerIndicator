@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -133,6 +134,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
     private boolean mCustomAdjacentIndicatorWidth = false;
     
     private final Paint mPaintFooterIndicator = new Paint();
+    private Paint mPaintAdjacentIndicator = new Paint();
     private float mFooterIndicatorHeight;
     private float mFooterIndicatorUnderlinePadding;
     private float mFooterPadding;
@@ -221,6 +223,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
         mPaintFooterLine.setColor(footerColor);
         mPaintFooterIndicator.setStyle(Paint.Style.FILL_AND_STROKE);
         mPaintFooterIndicator.setColor(footerColor);
+        mPaintAdjacentIndicator.setStyle(Paint.Style.FILL_AND_STROKE);
+        mPaintAdjacentIndicator.setStrokeWidth(0);
+        mPaintAdjacentIndicator.setColor(Color.BLACK);
         a.recycle();
 
         final ViewConfiguration configuration = ViewConfiguration.get(context);
@@ -564,22 +569,52 @@ public class TitlePageIndicator extends View implements PageIndicator {
                     mPaintText.setAlpha(colorTextAlpha - (int)(colorTextAlpha * selectedPercent));
                 }
                 
-                if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& previousPage) {
-                	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
-                	
-                	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorLeft);
-                	Bitmap arrowLeft = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
-                	float drawableStart = (height - mAdjacentIndicatorHeight) / 2; 
-            		canvas.drawBitmap(arrowLeft, bound.left +  mTitlePadding ,  drawableStart, null);
+                if(previousPage) {
+                	if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom ) {
+                    	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
+                    	
+                    	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorLeft);
+                    	Bitmap arrowLeft = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
+                    	float drawableStart = (height - mAdjacentIndicatorHeight) / 2; 
+                		canvas.drawBitmap(arrowLeft, bound.left +  mTitlePadding ,  drawableStart, null);
+                    }
+                	else if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows) {
+                		canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
+                		// TODO draw on canvas
+                		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
+                		mPath = new Path();
+                        mPath.moveTo(bound.left + mAdjacentIndicatorWidth + mTitlePadding, drawableStart);
+                        mPath.lineTo(bound.left + mTitlePadding, drawableStart + (mAdjacentIndicatorHeight / 2));
+                        mPath.lineTo(bound.left + mAdjacentIndicatorWidth + mTitlePadding, drawableStart + mAdjacentIndicatorHeight);
+                        mPath.close();
+                        canvas.drawPath(mPath, mPaintAdjacentIndicator);
+                		
+                		
+                	}
                 }
-                else if((mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows || mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom )&& nextPage) {
-                	canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
-                	
-                	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorRight);
-            		Bitmap arrowRight = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
-            		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
-            		canvas.drawBitmap(arrowRight, bound.right - (mAdjacentIndicatorWidth) - mTitlePadding, drawableStart  , null);
+                else if(nextPage) {
+                	if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom) {
+                		canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
+                    	
+                    	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorRight);
+                		Bitmap arrowRight = Bitmap.createScaledBitmap( ((BitmapDrawable)d).getBitmap(), Math.round(mAdjacentIndicatorWidth), Math.round(mAdjacentIndicatorHeight), true);
+                		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
+                		canvas.drawBitmap(arrowRight, bound.right - (mAdjacentIndicatorWidth) - mTitlePadding, drawableStart  , null);
+                	}
+                	else if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows) {
+                		canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
+                    	
+                		// TODO Draw on canvas
+                		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
+                		mPath = new Path();
+                        mPath.moveTo(bound.right - mAdjacentIndicatorWidth - mTitlePadding, drawableStart);
+                        mPath.lineTo(bound.right - mTitlePadding, drawableStart + (mAdjacentIndicatorHeight / 2));
+                        mPath.lineTo(bound.right - mAdjacentIndicatorWidth - mTitlePadding, drawableStart + mAdjacentIndicatorHeight);
+                        mPath.close();
+                        canvas.drawPath(mPath, mPaintAdjacentIndicator);
+                	}
                 }
+                
                 else canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
                 
                 //If we are within the selected bounds draw the selected text
