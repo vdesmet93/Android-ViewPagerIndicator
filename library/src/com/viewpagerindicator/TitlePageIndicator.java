@@ -204,10 +204,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
 	        mAdjacentIndicatorLeft = a.getResourceId(R.styleable.TitlePageIndicator_adjacentIndicatorLeft, R.drawable.vpi_adjacent_arrow_left);
 	        mAdjacentIndicatorRight = a.getResourceId(R.styleable.TitlePageIndicator_adjacentIndicatorRight, R.drawable.vpi_adjacent_arrow_right);
         }
-        else {
-        	mAdjacentIndicatorLeft = R.drawable.vpi_adjacent_arrow_left;
-        	mAdjacentIndicatorRight = R.drawable.vpi_adjacent_arrow_right;
-        }
+        
         mAdjacentIndicatorWidth = a.getDimensionPixelSize(R.styleable.TitlePageIndicator_adjacentIndicatorWidth, 0);
         mAdjacentIndicatorHeight = a.getDimensionPixelSize(R.styleable.TitlePageIndicator_adjacentIndicatorHeight, 0);
         if(mAdjacentIndicatorWidth != 0) mCustomAdjacentIndicatorWidth = true;
@@ -421,6 +418,32 @@ public class TitlePageIndicator extends View implements PageIndicator {
     public float getAdjacentIndicatorHeight() {
     	return mAdjacentIndicatorHeight;
     }
+    
+    /**
+     * Sets the color of the Adjacent Indicator Arrows. TODO test
+     * @param resId Resource ID that points to a color, e.g. R.color.white
+     */
+    public void setAdjacentIndicatorArrowCollorByResId(int resId) {
+    	this.mPaintAdjacentIndicator.setColor(this.getResources().getColor(resId));
+    }
+    
+    /**
+     * Sets the color of the Adjacent Indicator Arrows. TODO test
+     * @param color The color integer: (aa)rrggbb
+     */
+    public void setAdjacentIndicatorArrowColor(int color) {
+    	this.mPaintAdjacentIndicator.setColor(color);
+    	
+    }
+    
+    /**
+     * Returns the Adjacent Indicator Arrows color. TODO test
+     * @return The color integer: (aa)rrggbb
+     */
+    public int getAdjacentIndicatorArrowColor() {
+    	return this.mPaintAdjacentIndicator.getColor();
+    }
+     
     /*
      * (non-Javadoc)
      *
@@ -570,7 +593,7 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 }
                 
                 if(previousPage) {
-                	if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom ) {
+                	if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Custom && mAdjacentIndicatorLeft != 0) {
                     	canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
                     	
                     	Drawable d = this.getResources().getDrawable(mAdjacentIndicatorLeft);
@@ -578,9 +601,9 @@ public class TitlePageIndicator extends View implements PageIndicator {
                     	float drawableStart = (height - mAdjacentIndicatorHeight) / 2; 
                 		canvas.drawBitmap(arrowLeft, bound.left +  mTitlePadding ,  drawableStart, null);
                     }
-                	else if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows) {
+                	else if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows && mAdjacentIndicatorRight != 0) {
                 		canvas.drawText(mTitleProvider.getTitle(i), bound.left + mAdjacentIndicatorWidth  + (2*mTitlePadding), bound.bottom + mTopPadding, mPaintText);
-                		// TODO draw on canvas
+
                 		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
                 		mPath = new Path();
                         mPath.moveTo(bound.left + mAdjacentIndicatorWidth + mTitlePadding, drawableStart);
@@ -604,7 +627,6 @@ public class TitlePageIndicator extends View implements PageIndicator {
                 	else if(mAdjacentIndicatorStyle == AdjacentIndicatorStyle.Arrows) {
                 		canvas.drawText(mTitleProvider.getTitle(i), bound.left, bound.bottom + mTopPadding, mPaintText);
                     	
-                		// TODO Draw on canvas
                 		float drawableStart = (height - mAdjacentIndicatorHeight) / 2;
                 		mPath = new Path();
                         mPath.moveTo(bound.right - mAdjacentIndicatorWidth - mTitlePadding, drawableStart);
